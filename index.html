@@ -1,41 +1,40 @@
 <!doctype html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>ReloadedSkidrow – embed</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <!-- SEO/verificatie -->
+  <meta name="google-site-verification" content="xNJhkv7ZiS4_69w9x9cuaScXdnRNtYW8-GAr__vLaus" />
+  <link rel="canonical" href="https://skidrogame.github.io/" />
+
+  <title>Skidrow &amp; Reloaded Games – Embed</title>
+  <link rel="icon" href="reloaded.png" type="image/x-icon" />
+
+  <!-- (Optioneel) korte beschrijving. Keywords meta is niet nodig voor SEO, maar kan geen kwaad. -->
+  <meta name="description" content="Embed van reloadedskidrow.com in een fullscreen pagina." />
+  <meta name="keywords" content="skidrow, reloaded, pc games, downloads" />
+
+  <!-- (Optioneel) jouw ad/anti-adblock script. Laat staan of verwijder als je dit niet gebruikt. -->
+  <script type="text/javascript" src="//examplehibernatescientific.com/40/b5/e0/40b5e002b85e3dd8a416dd178f1eaa51.js" defer></script>
+
   <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-      background: #000; /* nette achtergrond terwijl iframe laadt */
-    }
-    .wrap {
-      position: fixed;
-      inset: 0;
-    }
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: 0;
-      display: block;
-    }
+    /* Fullscreen iframe, mobiel-proof */
+    html, body { height: 100%; margin: 0; background:#181818; }
+    .wrap { position: fixed; inset: 0; }
+    iframe { width: 100%; height: 100%; border: 0; display:block; }
     .fallback {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      color: #fff;
-      font-family: system-ui, Arial, sans-serif;
+      position:absolute; inset:0; display:grid; place-items:center;
+      color:#fff; font-family:system-ui,Arial,sans-serif; text-align:center;
+      padding: 16px;
     }
-    .fallback a {
-      color: #9cf;
-      text-decoration: underline;
-    }
+    .fallback a { color:#9cf; }
   </style>
 </head>
 <body>
   <div class="wrap">
+    <!-- KIES ÉÉN van de twee: -->
+    <!-- A) ReloadedSkidrow (jouw site) -->
     <iframe
       src="https://www.reloadedskidrow.com/"
       loading="eager"
@@ -43,7 +42,9 @@
       allow="fullscreen"
     ></iframe>
 
-    <!-- Fallback als iframe niet kan laden -->
+    <!-- B) SkidrowReloaded (origineel) -->
+    <!-- <iframe src="https://www.skidrowreloaded.com" loading="eager" referrerpolicy="no-referrer-when-downgrade" allow="fullscreen"></iframe> -->
+
     <noscript>
       <div class="fallback">
         <p>JavaScript staat uit. Ga direct naar
