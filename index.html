@@ -1,1 +1,39 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ReloadedSkidrow — embedded</title>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    .wrap { position: fixed; inset: 0; }
+    iframe { width: 100%; height: 100%; border: 0; display: block; }
+    .error {
+      position: absolute; inset: 0; display: none;
+      place-items: center; text-align: center; padding: 24px; font-family: system-ui, sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- Geen sandbox gebruiken als je ads wilt tonen -->
+    <iframe id="app" src="https://www.reloadedskidrow.com/" referrerpolicy="no-referrer-when-downgrade" allow="clipboard-read; clipboard-write; autoplay; encrypted-media; fullscreen; picture-in-picture; web-share"></iframe>
+    <div id="err" class="error">
+      <div>
+        <h1>Kan site niet inladen in een iframe</h1>
+        <p>Waarschijnlijk blokkeert <strong>reloadedskidrow.com</strong> framing (X-Frame-Options/CSP).
+           Zet de headers zoals hieronder beschreven of gebruik een proxy.</p>
+      </div>
+    </div>
+  </div>
 
+  <script>
+    // Eenvoudige check: als de iframe binnen ~3s niet laadt, toon melding
+    const f = document.getElementById('app');
+    const err = document.getElementById('err');
+    let done = false;
+    const t = setTimeout(() => { if (!done) err.style.display = 'grid'; }, 3000);
+    f.addEventListener('load', () => { done = true; clearTimeout(t); });
+  </script>
+</body>
+</html>
