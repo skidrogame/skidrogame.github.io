@@ -1,40 +1,18 @@
 <!doctype html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Static Mirror</title>
-  <meta name="robots" content="noindex,nofollow">
-  <link rel="canonical" href="https://www.reloadedskidrow.com/">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mirror wrapper</title>
   <style>
-    :root{--bg:#0b0b0b;--fg:#e7e7e7;--muted:#9aa0a6;--acc:#5ab0ff}
-    body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,Segoe UI,Roboto,Arial,sans-serif}
-    header{padding:24px 16px;border-bottom:1px solid #222}
-    header h1{margin:0;font-size:20px}
-    header a{color:var(--acc);text-decoration:none}
-    main{max-width:1200px;margin:0 auto;padding:16px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
-    .card{background:#121212;border:1px solid #1f1f1f;border-radius:14px;padding:14px}
-    .card a{color:var(--fg);text-decoration:none}
-    .muted{color:var(--muted);font-size:13px}
-    footer{padding:24px 16px;color:var(--muted);border-top:1px solid #222;margin-top:32px}
+    html,body{height:100%;margin:0}
+    .bar{padding:.6rem 1rem;background:#111;color:#fff;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif}
+    iframe{border:0;width:100%;height:calc(100% - 44px)}
   </style>
 </head>
 <body>
-  <header>
-    <h1>Mirror van <a href="https://www.reloadedskidrow.com/">reloadedskidrow.com</a></h1>
-    <p class="muted">Statische kopie voor archivering/downtime. Inhoud kan achterlopen.</p>
-  </header>
-
-  <main>
-    <div class="grid">
-      <!-- Voorbeeld “gelinkte” gespiegeldde pagina’s (vervang dit met jouw echte HTML-bestanden) -->
-      <article class="card"><a href="posts/its-johns-house-tenoke/index.html">It’s John’s House – TENOKE</a><div class="muted">/posts/its-johns-house-tenoke/</div></article>
-      <article class="card"><a href="posts/erannorth-renaissance-tenoke/index.html">Erannorth Renaissance – TENOKE</a><div class="muted">/posts/erannorth-renaissance-tenoke/</div></article>
-      <!-- … -->
-    </div>
-  </main>
-
-  <footer>© Mirror • Canonical: <a href="https://www.reloadedskidrow.com/">https://www.reloadedskidrow.com/</a></footer>
+  <div class="bar">Mirror van <a href="https://www.reloadedskidrow.com/" style="color:#9cf">reloadedskidrow.com</a></div>
+  <iframe src="https://www.reloadedskidrow.com/" loading="eager" referrerpolicy="no-referrer-when-downgrade"></iframe>
+  <noscript>JavaScript uitgeschakeld. <a href="https://www.reloadedskidrow.com/">Ga naar de site</a>.</noscript>
 </body>
 </html>
