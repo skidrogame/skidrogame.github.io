@@ -1,77 +1,159 @@
-<!doctype html>
-<html lang="nl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ReloadedSkidrow – embed (no flicker)</title>
-  <link rel="icon" href="reloaded.png" type="image/x-icon" />
-  <link rel="canonical" href="https://skidrogame.github.io/" />
-  <meta name="description" content="Fullscreen embed van reloadedskidrow.com zonder flikkeren." />
-  <style>
-    html, body { height:100%; margin:0; background:#111; }
-    .wrap { position:fixed; inset:0; overflow:hidden; }
-    iframe {
-      width:100%; height:100%; border:0; display:block;
-      transform:translateZ(0);
-      backface-visibility:hidden; -webkit-backface-visibility:hidden;
-      will-change:transform;
-      -webkit-overflow-scrolling:touch;
+export default {
+  async fetch(request, env, ctx) {
+    const upstream = 'https://www.reloadedskidrow.com'; // jouw target
+    const url = new URL(request.url);
+
+    // Bouw upstream URL (behoud pad en query)
+    const targetURL = new URL(url.pathname + url.search, upstream);
+
+    // Probeer de upstream te fetchen
+    let res = await fetch(targetURL.toString(), {
+      method: request.method,
+      headers: buildUpstreamHeaders(request.headers, new URL(upstream).host),
+      body: request.method !== 'GET' && request.method !== 'HEAD' ? await request.blob() : null,
+      redirect: 'follow'
+    });
+
+    // Alleen HTML transformeren (scripts injecten + URLs herschrijven)
+    const ctype = res.headers.get('content-type') || '';
+    if (ctype.includes('text/html')) {
+      const rewriter = new HTMLRewriter()
+        // Inject anti-bust in <head>
+        .on('head', new InjectAntiBust())
+        // Herschrijf href/src/srcset/action zodat alles via de worker blijft lopen
+        .on('a[href]', new RewriteAttr('href'))
+        .on('link[href]', new RewriteAttr('href'))
+        .on('script[src]', new RewriteAttr('src'))
+        .on('img[src]', new RewriteAttr('src'))
+        .on('source[srcset]', new RewriteSrcset('srcset'))
+        .on('iframe[src]', new RewriteAttr('src'))
+        .on('form[action]', new RewriteAttr('action'));
+
+      // Strip frame-blocking headers en zet permissieve CSP
+      const newHeaders = new Headers(res.headers);
+      stripFrameBlockingHeaders(newHeaders);
+
+      // Stream met rewriter
+      return new Response(rewriter.transform(res).body, {
+        status: res.status,
+        headers: newHeaders
+      });
     }
-    .loader {
-      position:absolute; inset:0; display:grid; place-items:center;
-      color:#ccc; font-family:system-ui, Arial, sans-serif;
-      transition:opacity .2s ease; pointer-events:none; user-select:none;
-    }
-    .loader.hidden { opacity:0; }
-    .loader .dot{display:inline-block;width:.6rem;height:.6rem;margin:.2rem;border-radius:50%;background:#555;animation:b 1s infinite}
-    .loader .dot:nth-child(2){animation-delay:.15s}
-    .loader .dot:nth-child(3){animation-delay:.3s}
-    @keyframes b{50%{opacity:.3}}
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div id="loader" class="loader" aria-hidden="true">
-      <span>Laden</span> <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-    </div>
 
-    <!-- BELANGRIJK: sandbox zonder top-navigation; zo kan een frame-buster je bovenpagina niet meer vervangen -->
-    <iframe
-      id="site"
-      src="https://www.reloadedskidrow.com/"
-      loading="eager"
-      referrerpolicy="no-referrer-when-downgrade"
-      allow="fullscreen; clipboard-read; clipboard-write; autoplay"
-      sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-    ></iframe>
+    // Niet-HTML: alleen headers schonen en doorgeven
+    const headers = new Headers(res.headers);
+    stripFrameBlockingHeaders(headers);
+    return new Response(res.body, { status: res.status, headers });
+  }
+};
 
-    <noscript>
-      <div class="loader" style="opacity:1">
-        JavaScript staat uit. Ga direct naar
-        <a href="https://www.reloadedskidrow.com/" style="color:#9cf">reloadedskidrow.com</a>.
-      </div>
-    </noscript>
-  </div>
+// ===== Helpers =====
 
-  <script>
-    const f = document.getElementById('site');
-    const l = document.getElementById('loader');
-    f.addEventListener('load', () => l.classList.add('hidden'));
+function buildUpstreamHeaders(reqHeaders, upstreamHost) {
+  const h = new Headers(reqHeaders);
+  h.set('Host', upstreamHost);
+  h.set('Origin', new URL('https://' + upstreamHost).origin);
+  // Verwijder hop-by-hop headers
+  ['cf-connecting-ip','x-forwarded-for','x-forwarded-host','x-forwarded-proto','content-length'].forEach(k => h.delete(k));
+  return h;
+}
 
-    // Eénmalige no-cache fallback als er na ~1.2s nog 'blank' staat
-    let triedNoCache = false;
-    setTimeout(() => {
-      try {
-        // Cross-origin check kan throwen; dat is oké.
-        if (!triedNoCache) {
-          const u = new URL(f.src);
-          u.searchParams.set('_embed', '1');
-          u.searchParams.set('_nocache', Date.now());
-          f.src = u.toString();
-          triedNoCache = true;
-        }
-      } catch(e) {}
-    }, 1200);
-  </script>
-</body>
-</html>
+function stripFrameBlockingHeaders(headers) {
+  // X-Frame-Options verwijderen
+  headers.delete('x-frame-options');
+
+  // CSP versoepelen: verwijder of vervang frame-ancestors
+  const csp = headers.get('content-security-policy');
+  if (csp) {
+    // verwijder frame-ancestors directive
+    const cleaned = csp
+      .split(';')
+      .map(s => s.trim())
+      .filter(s => s && !/^frame-ancestors/i.test(s))
+      .join('; ');
+    headers.set('content-security-policy', cleaned);
+  }
+
+  // CORS iets soepeler voor assets
+  if (!headers.has('access-control-allow-origin')) {
+    headers.set('access-control-allow-origin', '*');
+  }
+}
+
+class InjectAntiBust {
+  element(el) {
+    el.append(`
+<script>
+(function(){
+  // Markeer dat we bewust embedded zijn
+  window.__ALLOW_IFRAME__ = true;
+
+  // Als we in een iframe zitten, neutraliseer veelvoorkomende busters
+  if (window.top !== window.self) {
+    try {
+      var noop = function(){};
+      // Blokkeer top-navigation pogingen
+      try { Object.defineProperty(window.location, 'assign', { value: noop }); } catch(e){}
+      try { Object.defineProperty(window.location, 'replace', { value: noop }); } catch(e){}
+      try { history.pushState = noop; history.replaceState = noop; } catch(e){}
+
+      // Kill refresh loops
+      var _setInterval = window.setInterval;
+      window.setInterval = function(fn, t){
+        var s = (fn && fn.toString ? fn.toString() : '');
+        if (s.indexOf('top.location') !== -1 || s.indexOf('parent.location') !== -1) return 0;
+        return _setInterval(fn, t);
+      };
+      var _setTimeout = window.setTimeout;
+      window.setTimeout = function(fn, t){
+        var s = (fn && fn.toString ? fn.toString() : '');
+        if (s.indexOf('top.location') !== -1 || s.indexOf('parent.location') !== -1) return 0;
+        return _setTimeout(fn, t);
+      };
+    } catch(e){}
+  }
+})();
+</script>
+`, { html: true });
+  }
+}
+
+// Herschrijvers: maak absolute URLs naar de Worker zelf
+function toProxy(urlStr) {
+  try {
+    const u = new URL(urlStr, 'https://dummy.local'); // relative-safe
+    if (u.origin === 'null') return urlStr; // data:, mailto:, etc.
+  } catch { return urlStr; }
+  // Neem het pad zoals gegeven, laat absolute naar upstream ook door onze worker lopen
+  const req = new URL(globalThis.location?.href || 'https://worker.invalid');
+  const origin = req.origin || '';
+  // Verwijder protocol/host als aanwezig en maak relative naar worker origin
+  return urlStr.replace(/^https?:\/\/[^/]+/i, '');
+}
+
+class RewriteAttr {
+  constructor(attr) { this.attr = attr; }
+  element(el) {
+    const val = el.getAttribute(this.attr);
+    if (!val) return;
+    // Laat anchors als #hash staan
+    if (val.startsWith('#') || val.startsWith('mailto:') || val.startsWith('tel:') || val.startsWith('javascript:')) return;
+    el.setAttribute(this.attr, toProxy(val));
+  }
+}
+
+class RewriteSrcset {
+  constructor(attr) { this.attr = attr; }
+  element(el) {
+    const val = el.getAttribute(this.attr);
+    if (!val) return;
+    const parts = val.split(',').map(s => s.trim()).map(item => {
+      const m = item.match(/^(\S+)(\s+.+)?$/);
+      if (!m) return item;
+      const url = m[1];
+      const desc = m[2] || '';
+      return toProxy(url) + desc;
+    });
+    el.setAttribute(this.attr, parts.join(', '));
+  }
+}
