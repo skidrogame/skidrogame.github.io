@@ -3,45 +3,27 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ReloadedSkidrow – embed</title>
+  <title>ReloadedSkidrow – embed (no flicker)</title>
   <link rel="icon" href="reloaded.png" type="image/x-icon" />
-
-  <!-- Optioneel: SEO basics -->
   <link rel="canonical" href="https://skidrogame.github.io/" />
-  <meta name="description" content="Fullscreen embed van reloadedskidrow.com." />
-
+  <meta name="description" content="Fullscreen embed van reloadedskidrow.com zonder flikkeren." />
   <style>
-    /* Basis: geen scrollbars op de parent, donkere bg om flashes te maskeren */
-    html, body { height: 100%; margin: 0; background: #111; }
-
-    /* Fullscreen container fixed zodat mobiele adresbalk-resizes geen reflow triggeren */
-    .wrap { position: fixed; inset: 0; overflow: hidden; }
-
-    /* Anti-flicker voor iframe */
+    html, body { height:100%; margin:0; background:#111; }
+    .wrap { position:fixed; inset:0; overflow:hidden; }
     iframe {
-      width: 100%;
-      height: 100%;
-      border: 0;
-      display: block;
-      /* GPU compositing hints – helpt tegen white flashes bij scroll/resize */
-      transform: translateZ(0);
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-      will-change: transform;
-      /* iOS smooth scroll binnen iframe */
-      -webkit-overflow-scrolling: touch;
+      width:100%; height:100%; border:0; display:block;
+      transform:translateZ(0);
+      backface-visibility:hidden; -webkit-backface-visibility:hidden;
+      will-change:transform;
+      -webkit-overflow-scrolling:touch;
     }
-
-    /* Minimal loading overlay (verdwijnt zodra iframe ‘load’ fired) */
     .loader {
-      position: absolute; inset: 0;
-      display: grid; place-items: center;
-      color: #ccc; font-family: system-ui, Arial, sans-serif;
-      transition: opacity .2s ease;
-      pointer-events: none; user-select: none;
+      position:absolute; inset:0; display:grid; place-items:center;
+      color:#ccc; font-family:system-ui, Arial, sans-serif;
+      transition:opacity .2s ease; pointer-events:none; user-select:none;
     }
-    .loader.hidden { opacity: 0; }
-    .loader .dot { display:inline-block; width:.6rem; height:.6rem; margin:.2rem; border-radius:50%; background:#555; animation: b 1s infinite }
+    .loader.hidden { opacity:0; }
+    .loader .dot{display:inline-block;width:.6rem;height:.6rem;margin:.2rem;border-radius:50%;background:#555;animation:b 1s infinite}
     .loader .dot:nth-child(2){animation-delay:.15s}
     .loader .dot:nth-child(3){animation-delay:.3s}
     @keyframes b{50%{opacity:.3}}
@@ -50,17 +32,17 @@
 <body>
   <div class="wrap">
     <div id="loader" class="loader" aria-hidden="true">
-      <span>Laden</span>
-      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span>Laden</span> <span class="dot"></span><span class="dot"></span><span class="dot"></span>
     </div>
 
-    <!-- Zet je target hier: -->
+    <!-- BELANGRIJK: sandbox zonder top-navigation; zo kan een frame-buster je bovenpagina niet meer vervangen -->
     <iframe
       id="site"
       src="https://www.reloadedskidrow.com/"
       loading="eager"
       referrerpolicy="no-referrer-when-downgrade"
-      allow="fullscreen"
+      allow="fullscreen; clipboard-read; clipboard-write; autoplay"
+      sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
     ></iframe>
 
     <noscript>
@@ -72,23 +54,23 @@
   </div>
 
   <script>
-    // Verberg loader zodra iframe écht geladen is
     const f = document.getElementById('site');
     const l = document.getElementById('loader');
     f.addEventListener('load', () => l.classList.add('hidden'));
 
-    // Guard: als de target herlaad-loops veroorzaakt, forceer 1x no-cache param
+    // Eénmalige no-cache fallback als er na ~1.2s nog 'blank' staat
     let triedNoCache = false;
     setTimeout(() => {
       try {
-        // Als nog steeds geen content (soms zie je 'about:blank' white flash), probeer 1x no-cache
-        if (!triedNoCache && f.contentWindow.location.href === 'about:blank') {
-          triedNoCache = true;
+        // Cross-origin check kan throwen; dat is oké.
+        if (!triedNoCache) {
           const u = new URL(f.src);
+          u.searchParams.set('_embed', '1');
           u.searchParams.set('_nocache', Date.now());
           f.src = u.toString();
+          triedNoCache = true;
         }
-      } catch(e) { /* cross-origin, ignore */ }
+      } catch(e) {}
     }, 1200);
   </script>
 </body>
