@@ -1,14 +1,56 @@
 <!doctype html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Static Mirror (placeholder)</title>
-  <meta name="robots" content="noindex,nofollow">
-  <style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:2rem;max-width:800px;margin:auto;}</style>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ReloadedSkidrow – embed</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: #000; /* nette achtergrond terwijl iframe laadt */
+    }
+    .wrap {
+      position: fixed;
+      inset: 0;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
+    .fallback {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-family: system-ui, Arial, sans-serif;
+    }
+    .fallback a {
+      color: #9cf;
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
-  <h1>Static Mirror</h1>
-  <p>This is a placeholder. After the first crawl, this page is replaced.</p>
+  <div class="wrap">
+    <iframe
+      src="https://www.reloadedskidrow.com/"
+      loading="eager"
+      referrerpolicy="no-referrer-when-downgrade"
+      allow="fullscreen"
+    ></iframe>
+
+    <!-- Fallback als iframe niet kan laden -->
+    <noscript>
+      <div class="fallback">
+        <p>JavaScript staat uit. Ga direct naar
+          <a href="https://www.reloadedskidrow.com/">reloadedskidrow.com</a>.
+        </p>
+      </div>
+    </noscript>
+  </div>
 </body>
 </html>
